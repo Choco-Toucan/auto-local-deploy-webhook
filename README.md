@@ -23,14 +23,20 @@
 ## ECS 初始化步骤
 
 ```bash
-# 1. 安装 ossutil
+# 1. 安装 ossutil,以linux x64为例
 sudo yum install -y unzip
+
 curl -o ossutil-2.3.0-linux-amd64.zip https://gosspublic.alicdn.com/ossutil/v2/2.3.0/ossutil-2.3.0-linux-amd64.zip
+
 unzip ossutil-2.3.0-linux-amd64.zip
+
 cd ossutil-2.3.0-linux-amd64
+
 chmod 755 ossutil
+
 sudo mv ossutil /usr/local/bin/ && sudo ln -s /usr/local/bin/ossutil /usr/bin/ossutil
-ossutil --version
+
+ossutil version
 
 # 2. 创建部署用户和目录
 useradd -r -s /bin/false deploy
