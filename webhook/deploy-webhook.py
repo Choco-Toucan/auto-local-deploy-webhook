@@ -12,7 +12,6 @@ import sys
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 # ─── 配置加载 ───────────────────────────────────────────────
@@ -50,22 +49,21 @@ def load_config():
 
 # ─── OSS 操作 ───────────────────────────────────────────────
 
+def _oss_credentials(cfg):
+    """提取 OSS 通用参数，适配 ossutil v2.x 的 -e/-i/-k 传参方式"""
+    return [
+        "-e", cfg["oss"]["endpoint"],
+        "-i", cfg["oss"]["access_key_id"],
+        "-k", cfg["oss"]["access_key_secret"],
+    ]
+
+
 def oss_download(cfg, oss_path, local_path):
     """从 OSS 下载文件，返回 True/False"""
-    endpoint = cfg["oss"]["endpoint"]
     bucket = cfg["oss"]["bucket"]
-    key_id = cfg["oss"]["access_key_id"]
-    key_secret = cfg["oss"]["access_key_secret"]
-
     uri = f"oss://{bucket}/{oss_path}"
-    env = {
-        **os.environ,
-        "OSSUTIL_ENDPOINT": endpoint,
-        "OSS_ACCESS_KEY_ID": key_id,
-        "OSS_ACCESS_KEY_SECRET": key_secret,
-    }
-    cmd = ["ossutil", "cp", uri, local_path, "--update"]
-    result = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=120)
+    cmd = ["ossutil", "cp", uri, local_path, *_oss_credentials(cfg), "--update"]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
     if result.returncode != 0:
         log.error("ossutil 下载失败: %s → %s\nstderr: %s", uri, local_path, result.stderr)
@@ -76,21 +74,10 @@ def oss_download(cfg, oss_path, local_path):
 
 def oss_file_exists(cfg, oss_path):
     """检查 OSS 文件是否存在"""
-    endpoint = cfg["oss"]["endpoint"]
     bucket = cfg["oss"]["bucket"]
-    key_id = cfg["oss"]["access_key_id"]
-    key_secret = cfg["oss"]["access_key_secret"]
-
     uri = f"oss://{bucket}/{oss_path}"
-    env = {
-        **os.environ,
-        "OSSUTIL_ENDPOINT": endpoint,
-        "OSS_ACCESS_KEY_ID": key_id,
-        "OSS_ACCESS_KEY_SECRET": key_secret,
-    }
-    result = subprocess.run(
-        ["ossutil", "ls", uri], env=env, capture_output=True, text=True, timeout=30
-    )
+    cmd = ["ossutil", "ls", uri, *_oss_credentials(cfg)]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
     return result.returncode == 0 and "Object Number is: 1" in result.stdout
 
 

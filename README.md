@@ -24,7 +24,7 @@
 
 ```bash
 # 1. 安装 ossutil
-wget https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64 -O /usr/local/bin/ossutil
+wget https://gosspublic.alicdn.com/ossutil/2.3.0/ossutil64 -O /usr/local/bin/ossutil
 chmod +x /usr/local/bin/ossutil
 
 # 2. 创建部署用户和目录
