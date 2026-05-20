@@ -15,7 +15,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 每次提交到远端以后，将本次提交的变更内容通过飞书机器人webhook的方式进行发送
 webhook的url为：https://open.feishu.cn/open-apis/bot/v2/hook/2a4dabbe-eba5-45f3-92a4-06e695113364
 
-注意，该webhook可能为多个场景使用，所以通知内容要丰富些，使用规范化的消息卡片。
+注意，该webhook可能为多个场景使用，所以通知内容要丰富些，包含
+ - 项目
+ - 分支
+ - 作者
+ - 提交时间，细到秒
+ - 变更摘要
+ - 以及对应的构建信息
+ 使用规范化的消息卡片。
 
 
 ## 概览
