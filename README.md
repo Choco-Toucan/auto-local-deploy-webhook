@@ -29,15 +29,15 @@ wget https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil64 -O /usr/local/bin/os
 chmod +x /usr/local/bin/ossutil
 
 # 2. 创建部署用户和目录
-useradd -r -s /bin/false skada
-mkdir -p /opt/skada/deploy-webhook /opt/skada/{api-service,mng-service,mng-web}
+useradd -r -s /bin/false deploy
+mkdir -p /opt/deploy-webhook /opt/deploy/{api-service,mng-service,mng-web}
 
 # 3. 部署 webhook
-cp deploy/webhook/deploy-webhook.py /opt/skada/deploy-webhook/
-cp deploy/webhook/config.json /opt/skada/deploy-webhook/  # 需先创建
+cp deploy/webhook/deploy-webhook.py /opt/deploy-webhook/
+cp deploy/webhook/config.json /opt/deploy-webhook/  # 需先创建
 cp deploy/webhook/deploy-webhook.service /etc/systemd/system/
-chmod 600 /opt/skada/deploy-webhook/config.json
-chown -R skada:skada /opt/skada
+chmod 600 /opt/deploy-webhook/config.json
+chown -R deploy:deploy /opt/deploy-webhook
 
 # 4. 启动
 systemctl daemon-reload
@@ -55,9 +55,9 @@ nginx -t && systemctl reload nginx
 ```json
 "my-service": {
     "oss_path": "my-service/{commit}.jar",
-    "deploy_dir": "/opt/skada/my-service",
+    "deploy_dir": "/opt/deploy/my-service",
     "artifact_name": "my-service.jar",
-    "systemd_unit": "skada-my-service",
+    "systemd_unit": "deploy-my-service",
     "backup": true
 }
 ```

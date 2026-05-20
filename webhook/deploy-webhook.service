@@ -1,16 +1,16 @@
 [Unit]
-Description=Skada Deploy Webhook
+Description=Deploy Webhook
 After=network.target
 
 [Service]
 Type=simple
-User=skada
-Group=skada
-WorkingDirectory=/opt/skada/deploy-webhook
-Environment=SKADA_DEPLOY_CONFIG=/opt/skada/deploy-webhook/config.json
-Environment=SKADA_DEPLOY_LOG=/var/log/skada-deploy.log
+User=deploy
+Group=deploy
+WorkingDirectory=/opt/deploy-webhook
+Environment=DEPLOY_WEBHOOK_CONFIG=/opt/deploy-webhook/config.json
+Environment=DEPLOY_WEBHOOK_LOG=/var/log/deploy-webhook.log
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/bin/python3 /opt/skada/deploy-webhook/deploy-webhook.py
+ExecStart=/usr/bin/python3 /opt/deploy-webhook/deploy-webhook.py
 Restart=always
 RestartSec=5
 StandardOutput=journal

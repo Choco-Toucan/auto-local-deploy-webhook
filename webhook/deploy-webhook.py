@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Skada 部署 Webhook
+部署 Webhook
 配置驱动：新增服务只需在 config.json 的 services 中添加一条。
 """
 
@@ -18,13 +18,13 @@ from urllib.parse import urlparse
 # ─── 配置加载 ───────────────────────────────────────────────
 
 CONFIG_PATH = os.environ.get(
-    "SKADA_DEPLOY_CONFIG",
+    "DEPLOY_WEBHOOK_CONFIG",
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"),
 )
 
 LOG_PATH = os.environ.get(
-    "SKADA_DEPLOY_LOG",
-    "/var/log/skada-deploy.log",
+    "DEPLOY_WEBHOOK_LOG",
+    "/var/log/deploy-webhook.log",
 )
 
 logging.basicConfig(
@@ -134,7 +134,8 @@ def deploy_service(cfg, service_name, commit):
 
     # 执行自定义部署命令
     if svc.get("deploy_cmd"):
-        cmd = svc["deploy_cmd"].replace("{artifact}", local_file)
+        artifact_path = target_file if svc.get("artifact_name") else local_file
+        cmd = svc["deploy_cmd"].replace("{artifact}", artifact_path)
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
             log.error("部署命令失败: %s\nstderr: %s", cmd, result.stderr)
