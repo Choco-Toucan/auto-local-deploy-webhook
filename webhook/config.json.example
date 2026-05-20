@@ -1,0 +1,37 @@
+{
+    "secret": "生成64位随机字符串替换此处",
+    "listen": {
+        "host": "127.0.0.1",
+        "port": 19090
+    },
+    "oss": {
+        "endpoint": "oss-cn-hangzhou.aliyuncs.com",
+        "bucket": "skada-deploy",
+        "access_key_id": "阿里云RAM子账号AccessKeyId",
+        "access_key_secret": "阿里云RAM子账号AccessKeySecret"
+    },
+    "services": {
+        "api-service": {
+            "oss_path": "api-service/{commit}.jar",
+            "deploy_dir": "/opt/skada/api-service",
+            "artifact_name": "api-service.jar",
+            "systemd_unit": "skada-api",
+            "backup": true
+        },
+        "mng-service": {
+            "oss_path": "mng-service/{commit}.jar",
+            "deploy_dir": "/opt/skada/mng-service",
+            "artifact_name": "mng-service.jar",
+            "systemd_unit": "skada-mng",
+            "backup": true
+        },
+        "mng-web": {
+            "oss_path": "mng-web/{commit}.tar.gz",
+            "deploy_dir": "/opt/skada/mng-web/dist",
+            "artifact_name": null,
+            "systemd_unit": null,
+            "deploy_cmd": "tar xzf {artifact} -C /opt/skada/mng-web/ && nginx -s reload",
+            "backup": false
+        }
+    }
+}

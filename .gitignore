@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# 配置文件（包含敏感信息，不应提交）
+webhook/config.json
+
+# 日志
+*.log
+
+# 其他
+ruvector.db
