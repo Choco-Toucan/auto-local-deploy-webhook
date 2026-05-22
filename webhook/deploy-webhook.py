@@ -4,6 +4,7 @@
 配置驱动：新增服务只需在 config.json 的 services 中添加一条。
 """
 
+import argparse
 import json
 import logging
 import os
@@ -143,6 +144,24 @@ def deploy_service(cfg, service_name, commit):
     return {"ok": True, "message": f"{service_name} 部署成功"}
 
 
+# ─── 部署执行（HTTP / CLI 共用） ─────────────────────────
+
+def execute_deploy(cfg, commit, services):
+    """执行部署并返回结果字典"""
+    log.info("收到部署请求: commit=%s services=%s", commit, services)
+
+    results = {}
+    for svc_name in services:
+        log.info("开始部署: %s", svc_name)
+        t0 = time.time()
+        result = deploy_service(cfg, svc_name, commit)
+        elapsed = time.time() - t0
+        result["elapsed_sec"] = round(elapsed, 1)
+        results[svc_name] = result
+
+    return results
+
+
 # ─── HTTP Handler ──────────────────────────────────────────
 
 class DeployHandler(BaseHTTPRequestHandler):
@@ -200,16 +219,7 @@ class DeployHandler(BaseHTTPRequestHandler):
             self._json_response(400, {"error": "缺少 services 列表"})
             return
 
-        log.info("收到部署请求: commit=%s services=%s", commit, services)
-
-        results = {}
-        for svc_name in services:
-            log.info("开始部署: %s", svc_name)
-            t0 = time.time()
-            result = deploy_service(self.server.config, svc_name, commit)
-            elapsed = time.time() - t0
-            result["elapsed_sec"] = round(elapsed, 1)
-            results[svc_name] = result
+        results = execute_deploy(self.server.config, commit, services)
 
         all_ok = all(r["ok"] for r in results.values())
         status_code = 200 if all_ok else 500
@@ -219,7 +229,31 @@ class DeployHandler(BaseHTTPRequestHandler):
 # ─── 入口 ──────────────────────────────────────────────────
 
 def main():
+    parser = argparse.ArgumentParser(description="部署 Webhook / 本地触发")
+    sub = parser.add_subparsers(dest="mode", help="运行模式")
+
+    # 本地触发子命令
+    local = sub.add_parser("deploy", help="本地触发部署")
+    local.add_argument("--commit", required=True, help="构建 commit hash")
+    local.add_argument("--services", required=True, nargs="+", help="要部署的服务名列表")
+
+    # HTTP 服务子命令
+    sub.add_parser("serve", help="启动 HTTP Webhook 服务")
+
+    args = parser.parse_args()
     cfg = load_config()
+
+    if args.mode == "deploy":
+        results = execute_deploy(cfg, args.commit, args.services)
+        all_ok = all(r["ok"] for r in results.values())
+        status = "成功" if all_ok else "失败"
+        log.info("部署%s", status)
+        for name, r in results.items():
+            flag = "✓" if r["ok"] else "✗"
+            log.info("  %s %s (%ss): %s", flag, name, r["elapsed_sec"], r["message"])
+        sys.exit(0 if all_ok else 1)
+
+    # 默认: HTTP 服务模式
     host = cfg["listen"]["host"]
     port = cfg["listen"]["port"]
 
