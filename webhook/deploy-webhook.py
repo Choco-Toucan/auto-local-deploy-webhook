@@ -71,6 +71,8 @@ def oss_file_exists(cfg, oss_path):
     uri = f"oss://{bucket}/{oss_path}"
     cmd = ["ossutil", "ls", uri, *_oss_credentials(cfg)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    log.info("ossutil ls 结果: returncode=%s stdout=%s stderr=%s",
+             result.returncode, result.stdout.strip(), result.stderr.strip())
     return result.returncode == 0 and "Object Number is: 1" in result.stdout
 
 
