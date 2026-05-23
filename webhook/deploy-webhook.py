@@ -22,18 +22,10 @@ CONFIG_PATH = os.environ.get(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"),
 )
 
-LOG_PATH = os.environ.get(
-    "DEPLOY_WEBHOOK_LOG",
-    "/var/log/deploy-webhook.log",
-)
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_PATH),
-        logging.StreamHandler(sys.stdout),
-    ],
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 log = logging.getLogger("deploy-webhook")
 
