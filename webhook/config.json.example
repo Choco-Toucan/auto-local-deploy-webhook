@@ -5,7 +5,7 @@
         "port": 19090
     },
     "oss": {
-        "endpoint": "oss-cn-hangzhou.aliyuncs.com",
+        "endpoint": "oss-cn-beijing-internal.aliyuncs.com",
         "bucket": "skada-deploy",
         "access_key_id": "阿里云RAM子账号AccessKeyId",
         "access_key_secret": "阿里云RAM子账号AccessKeySecret"
