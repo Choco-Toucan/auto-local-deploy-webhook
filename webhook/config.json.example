@@ -6,6 +6,7 @@
     },
     "oss": {
         "endpoint": "oss-cn-beijing-internal.aliyuncs.com",
+        "region": "cn-beijing",
         "bucket": "skada-deploy",
         "access_key_id": "阿里云RAM子账号AccessKeyId",
         "access_key_secret": "阿里云RAM子账号AccessKeySecret"

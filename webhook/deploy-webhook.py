@@ -43,11 +43,12 @@ def load_config():
 # ─── OSS 操作 ───────────────────────────────────────────────
 
 def _oss_credentials(cfg):
-    """提取 OSS 通用参数，适配 ossutil v2.x 的 -e/-i/-k 传参方式"""
+    """提取 OSS 通用参数，适配 ossutil v2.x 的 -e/-i/-k/--region 传参方式"""
     return [
         "-e", cfg["oss"]["endpoint"],
         "-i", cfg["oss"]["access_key_id"],
         "-k", cfg["oss"]["access_key_secret"],
+        "--region", cfg["oss"]["region"],
     ]
 
 
