@@ -53,28 +53,40 @@ def _oss_credentials(cfg):
 
 
 def oss_download(cfg, oss_path, local_path):
-    """从 OSS 下载文件，返回 True/False"""
+    """从 OSS 下载文件，返回 (ok: bool, detail: str)"""
     bucket = cfg["oss"]["bucket"]
     uri = f"oss://{bucket}/{oss_path}"
     cmd = ["ossutil", "cp", uri, local_path, *_oss_credentials(cfg), "--update"]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
 
     if result.returncode != 0:
-        log.error("ossutil 下载失败: %s → %s\nstderr: %s", uri, local_path, result.stderr)
-        return False
+        detail = f"ossutil cp 失败 (exit={result.returncode})"
+        if result.stderr:
+            detail += f" stderr: {result.stderr.strip()}"
+        if result.stdout:
+            detail += f" stdout: {result.stdout.strip()}"
+        log.error("ossutil 下载失败: %s → %s | %s", uri, local_path, detail)
+        return False, detail
     log.info("OSS 下载完成: %s → %s", uri, local_path)
-    return True
+    return True, ""
 
 
 def oss_file_exists(cfg, oss_path):
-    """检查 OSS 文件是否存在"""
+    """检查 OSS 文件是否存在，返回 (ok: bool, detail: str)"""
     bucket = cfg["oss"]["bucket"]
     uri = f"oss://{bucket}/{oss_path}"
     cmd = ["ossutil", "ls", uri, *_oss_credentials(cfg)]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-    log.info("ossutil ls 结果: returncode=%s stdout=%s stderr=%s",
+    log.info("ossutil ls 结果: exit=%s stdout=%s stderr=%s",
              result.returncode, result.stdout.strip(), result.stderr.strip())
-    return result.returncode == 0 and "Object Number is: 1" in result.stdout
+    if result.returncode != 0:
+        detail = f"ossutil ls 失败 (exit={result.returncode})"
+        if result.stderr:
+            detail += f" stderr: {result.stderr.strip()}"
+        return False, detail
+    if "Object Number is: 1" not in result.stdout:
+        return False, f"文件不存在于 OSS: {oss_path}"
+    return True, ""
 
 
 # ─── 部署操作 ───────────────────────────────────────────────
@@ -88,11 +100,16 @@ def deploy_service(cfg, service_name, commit):
     oss_path = svc["oss_path"].replace("{commit}", commit)
 
     # 检查 OSS 产物是否存在
-    if not oss_file_exists(cfg, oss_path):
-        return {"ok": False, "message": f"OSS 产物不存在: {oss_path}"}
+    exists_ok, exists_detail = oss_file_exists(cfg, oss_path)
+    if not exists_ok:
+        return {"ok": False, "message": f"OSS 产物检查失败: {exists_detail}"}
 
     deploy_dir = Path(svc["deploy_dir"])
     deploy_dir.mkdir(parents=True, exist_ok=True)
+
+    # 确保 deploy 用户对部署目录有写权限
+    if not os.access(deploy_dir, os.W_OK):
+        return {"ok": False, "message": f"部署目录无写权限: {deploy_dir}"}
 
     # 确定下载文件路径
     if svc.get("artifact_name"):
@@ -104,8 +121,9 @@ def deploy_service(cfg, service_name, commit):
         local_file = str(deploy_dir / f"artifact-{commit}{ext}")
 
     # 下载
-    if not oss_download(cfg, oss_path, local_file):
-        return {"ok": False, "message": f"下载失败: {oss_path}"}
+    download_ok, download_detail = oss_download(cfg, oss_path, local_file)
+    if not download_ok:
+        return {"ok": False, "message": f"下载失败: {oss_path} — {download_detail}"}
 
     # 备份 + 替换
     if svc.get("artifact_name"):
@@ -121,7 +139,7 @@ def deploy_service(cfg, service_name, commit):
         cmd = svc["deploy_cmd"].replace("{artifact}", artifact_path)
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
-            log.error("部署命令失败: %s\nstderr: %s", cmd, result.stderr)
+            log.error("部署命令失败: %sstderr: %s", cmd, result.stderr)
             return {"ok": False, "message": f"部署命令失败: {result.stderr}"}
         log.info("部署命令完成: %s", cmd)
 
@@ -132,7 +150,7 @@ def deploy_service(cfg, service_name, commit):
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode != 0:
-            log.error("重启失败: %s\nstderr: %s", svc["systemd_unit"], result.stderr)
+            log.error("重启失败: %sstderr: %s", svc["systemd_unit"], result.stderr)
             return {"ok": False, "message": f"重启失败: {result.stderr}"}
         log.info("已重启: %s", svc["systemd_unit"])
 
