@@ -9,7 +9,7 @@ Group=deploy
 WorkingDirectory=/opt/deploy-webhook
 Environment=DEPLOY_WEBHOOK_CONFIG=/opt/deploy-webhook/config.json
 Environment=DEPLOY_WEBHOOK_LOG=/var/log/deploy-webhook.log
-Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ExecStart=/usr/bin/python3 /opt/deploy-webhook/deploy-webhook.py
 Restart=always
 RestartSec=5

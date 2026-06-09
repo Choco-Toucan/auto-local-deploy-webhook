@@ -146,7 +146,7 @@ def deploy_service(cfg, service_name, commit):
     # 重启 systemd 服务
     if svc.get("systemd_unit"):
         result = subprocess.run(
-            ["systemctl", "restart", svc["systemd_unit"]],
+            ["sudo", "systemctl", "restart", svc["systemd_unit"]],
             capture_output=True, text=True, timeout=30,
         )
         if result.returncode != 0:
