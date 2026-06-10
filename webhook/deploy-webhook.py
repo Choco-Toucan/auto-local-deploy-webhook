@@ -10,6 +10,7 @@ import logging
 import os
 import subprocess
 import sys
+import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -232,11 +233,19 @@ class DeployHandler(BaseHTTPRequestHandler):
             self._json_response(400, {"error": "缺少 services 列表"})
             return
 
-        results = execute_deploy(self.server.config, commit, services)
+        # 校验通过，立即响应，异步执行部署
+        self._json_response(202, {"status": "accepted", "commit": commit, "services": services})
 
-        all_ok = all(r["ok"] for r in results.values())
-        status_code = 200 if all_ok else 500
-        self._json_response(status_code, {"services": results})
+        def run():
+            results = execute_deploy(self.server.config, commit, services)
+            all_ok = all(r["ok"] for r in results.values())
+            status = "成功" if all_ok else "失败"
+            log.info("异步部署%s | commit=%s", status, commit)
+            for name, r in results.items():
+                flag = "✓" if r["ok"] else "✗"
+                log.info("  %s %s (%ss): %s", flag, name, r["elapsed_sec"], r["message"])
+
+        threading.Thread(target=run, daemon=True).start()
 
 
 # ─── 入口 ──────────────────────────────────────────────────
