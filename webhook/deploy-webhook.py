@@ -234,7 +234,7 @@ class DeployHandler(BaseHTTPRequestHandler):
             return
 
         # 校验通过，立即响应，异步执行部署
-        self._json_response(202, {"status": "accepted", "commit": commit, "services": services})
+        self._json_response(200, {"status": "accepted", "commit": commit, "services": services})
 
         def run():
             results = execute_deploy(self.server.config, commit, services)
